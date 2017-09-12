@@ -1,15 +1,17 @@
 package ca.mcgill.ecse211.lab1;
 
 import lejos.hardware.motor.*;
-import java.util.ArrayList;
 
 public class BangBangController implements UltrasonicController {
-  
+  private static final int FILTER_OUT = 20;
+	
+	
   private final int bandCenter;
   private final int bandwidth;
   private final int motorLow;
   private final int motorHigh;
   private int distance;
+  private int filterControl;
   
   // MAs
   //private static final int SMA_N = 10; // avg over last n;
@@ -24,10 +26,11 @@ public class BangBangController implements UltrasonicController {
     this.bandwidth = bandwidth;
     this.motorLow = motorLow;
     this.motorHigh = motorHigh;
+    this.filterControl = 0;
     WallFollowingLab.leftMotor.setSpeed(motorHigh); // Start robot moving forward
     WallFollowingLab.rightMotor.setSpeed(motorHigh);
-    WallFollowingLab.leftMotor.forward();
-    WallFollowingLab.rightMotor.forward();
+    WallFollowingLab.leftMotor.backward();
+    WallFollowingLab.rightMotor.backward();
   
     // Values for moving average
     //this.movingAverage = 0;
@@ -37,7 +40,22 @@ public class BangBangController implements UltrasonicController {
 
   @Override
   public void processUSData(int distance) {
-    this.distance = distance;
+	  if (distance >= 255 && filterControl < FILTER_OUT) {
+	      // bad value, do not set the distance var, however do increment the
+	      // filter value
+	      filterControl++;
+	    } else if (distance >= 255) {
+	      // We have repeated large values, so there must actually be nothing
+	      // there: leave the distance alone
+	      this.distance = distance;
+	    } else {
+	      // distance went below 255: reset filter and leave
+	      // distance alone.
+	      filterControl = 0;
+	      this.distance = distance;
+	    }
+	  
+    this.distance = (int)(Math.sqrt(2.0) * (double)distance);
     int error = this.bandCenter - distance;
     
     // SMA
@@ -62,8 +80,8 @@ public class BangBangController implements UltrasonicController {
   private void setMotorsSpeed(int leftSpeed, int rightSpeed) {
 	  WallFollowingLab.leftMotor.setSpeed(leftSpeed);
 	  WallFollowingLab.rightMotor.setSpeed(rightSpeed);
-	  WallFollowingLab.leftMotor.forward();
-	  WallFollowingLab.rightMotor.forward();
+	  WallFollowingLab.leftMotor.backward();
+	  WallFollowingLab.rightMotor.backward();
   }
 
   /*private int SMA(int currentValue) {

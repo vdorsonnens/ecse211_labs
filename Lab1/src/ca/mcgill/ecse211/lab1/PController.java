@@ -5,10 +5,10 @@ import lejos.hardware.motor.EV3LargeRegulatedMotor;
 public class PController implements UltrasonicController {
 
   /* Constants */
-  private static final int MOTOR_SPEED = 200;
+  private static final int MOTOR_SPEED = 150;
   private static final int FILTER_OUT = 20;
   private static final double PROP_CONSTANT = 1.0;
-  private static final int MAX_CORRECTION = 100;
+  private static final int MAX_CORRECTION = 50;
 
   private final int bandCenter;
   private final int bandWidth;
@@ -49,7 +49,6 @@ public class PController implements UltrasonicController {
       this.distance = distance;
     }
 
-    // TODO: process a movement based on the us distance passed in (P style)
     int error = this.bandCenter - distance;
     int absError = error > 0 ? error: -1*error;
     int leftSpeed, rightSpeed;
@@ -75,7 +74,7 @@ public class PController implements UltrasonicController {
   }
   
   private int calculateCorrection(int absError) {
-	  // y = ax, maybe try y = ae^x
+	  // y = ax, maybe try something smoother like ^2
 	  int correction = (int) (PROP_CONSTANT * (double) absError );
 	  correction = correction < MAX_CORRECTION ? correction: MAX_CORRECTION;
 	  return correction;

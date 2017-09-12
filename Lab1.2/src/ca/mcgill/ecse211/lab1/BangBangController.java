@@ -3,9 +3,9 @@ package ca.mcgill.ecse211.lab1;
 import lejos.hardware.motor.*;
 
 public class BangBangController implements UltrasonicController {
-  private static final int FILTER_OUT = 20;
-	
-	
+  private static final int SPEEDDELTA = 50;
+  private static final int FILTER_OUT = 1000;
+  
   private final int bandCenter;
   private final int bandwidth;
   private final int motorLow;
@@ -13,13 +13,6 @@ public class BangBangController implements UltrasonicController {
   private int distance;
   private int filterControl;
   
-  // MAs
-  //private static final int SMA_N = 10; // avg over last n;
-    
-  //private int movingAverage;
-  //private int dataCount;
-  //private ArrayList<Integer> dataBuff;
-
   public BangBangController(int bandCenter, int bandwidth, int motorLow, int motorHigh) {
     // Default Constructor
     this.bandCenter = bandCenter;
@@ -31,50 +24,42 @@ public class BangBangController implements UltrasonicController {
     WallFollowingLab.rightMotor.setSpeed(motorHigh);
     WallFollowingLab.leftMotor.backward();
     WallFollowingLab.rightMotor.backward();
-  
-    // Values for moving average
-    //this.movingAverage = 0;
-    //this.dataCount = 0;
-    //this.dataBuff = new ArrayList<Integer>(); //change this for a SMA_N sized queue
+
   }
 
   @Override
   public void processUSData(int distance) {
-	  if (distance >= 255 && filterControl < FILTER_OUT) {
-	      // bad value, do not set the distance var, however do increment the
-	      // filter value
-	      filterControl++;
-	    } else if (distance >= 255) {
-	      // We have repeated large values, so there must actually be nothing
-	      // there: leave the distance alone
-	      this.distance = distance;
-	    } else {
-	      // distance went below 255: reset filter and leave
-	      // distance alone.
-	      filterControl = 0;
-	      this.distance = distance;
-	    }
-	  
     this.distance = (int)(Math.sqrt(2.0) * (double)distance);
-    int error = this.bandCenter - distance;
     
-    // SMA
-    //error = SMA(error);
+    if (distance >= 255 && filterControl < FILTER_OUT) {
+        // bad value, do not set the distance var, however do increment the
+        // filter value
+        filterControl++;
+      } else if (distance >= 255) {
+        // We have repeated large values, so there must actually be nothing
+        // there: leave the distance alone
+        this.distance = distance;
+      } else {
+        // distance went below 255: reset filter and leave
+        // distance alone.
+        filterControl = 0;
+        this.distance = distance;
+      }
     
-    //TODO WMA
-    //TODO EWMA
     
+    
+    int error = this.bandCenter - this.distance;   
     int absError = error > 0 ? error: -1*error;
     
     // just right
     if (absError < this.bandwidth)
-    	setMotorsSpeed(this.motorHigh, this.motorHigh);
+    	setMotorsSpeed(this.motorHigh + SPEEDDELTA, this.motorHigh + SPEEDDELTA);
     // too close
     else if (error > 0) 
-    	setMotorsSpeed(this.motorHigh, this.motorLow);
+    	setMotorsSpeed(this.motorHigh + SPEEDDELTA, this.motorHigh - SPEEDDELTA);
     // too far
     else 
-    	setMotorsSpeed(this.motorLow, this.motorHigh);
+    	setMotorsSpeed(this.motorHigh - SPEEDDELTA, this.motorHigh + SPEEDDELTA);
   }
   
   private void setMotorsSpeed(int leftSpeed, int rightSpeed) {
@@ -83,24 +68,6 @@ public class BangBangController implements UltrasonicController {
 	  WallFollowingLab.leftMotor.backward();
 	  WallFollowingLab.rightMotor.backward();
   }
-
-  /*private int SMA(int currentValue) {
-    int nNew;
-    int nFirst;
-    int firstVal = 0;
-
-    if (this.dataCount < SMA_N-1) {
-      this.dataCount++;
-      nNew = this.dataCount;
-      nFirst = 1
-    } else {
-      firstVal = this.dataBuff.get(0);
-      this.dataBuff.
-      nNew = SMA_;
-      nFirst = SMA_N;
-    }
-    this.movingAverage = this.movingAverage + currentValue/this.dataCount - first/(this.dataCount-1);
-  }*/
 
   @Override
   public int readUSDistance() {

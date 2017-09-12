@@ -1,0 +1,5 @@
+ConnectToName=true
+ConnectionName=10.0.1.1
+eclipse.preferences.version=1
+ev3Home=/home/vincent/Documents/McGill/FALL2017/ECSE211/lejos/Mac or Linux/leJOS_EV3_0.9.1-beta
+useSeparateJVM=true

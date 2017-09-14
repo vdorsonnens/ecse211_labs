@@ -34,10 +34,9 @@ public class WallFollowingLab {
 
     // Setup controller objects
 
-    BangBangController bangbangController =
-        new BangBangController(bandCenter, bandWidth, motorLow, motorHigh);
+    BangBangController bangbangController = new BangBangController();
 
-    PController pController = new PController(bandCenter, bandWidth);
+    PController pController = new PController();
 
     // Setup ultrasonic sensor
     // There are 4 steps involved:

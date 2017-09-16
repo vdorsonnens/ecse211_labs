@@ -9,12 +9,12 @@ public class BangBangController implements UltrasonicController {
   private static final int SPEEDDELTA = 70;
   private static final int WMA_N = 20;
   private static final int BANDCENTER = 25;
-  private static final int BANDWIDTH = 2;
-  private static final int FILTER_OUT = 5;
+  private static final int BANDWIDTH = 1;
+  private static final int FILTER_OUT = 0;
   private static final int CRITICAL_THRESHOLD = 10;
   private static final int CLOSE_VALUE = BANDCENTER - BANDWIDTH;
   
-  private static final int AVG_SIZE = 40;
+  private static final int AVG_SIZE = 20;
   private int sampleCount;
   private int movingAvg;
   private LinkedList<Integer> avgBuffer;
@@ -43,6 +43,7 @@ public class BangBangController implements UltrasonicController {
       filterControl++;
     } else if (correctedDistance >= 100) {
       this.distance = 100;
+      setMovingAverage(150);
     } else {
       filterControl = 0;
       this.distance = correctedDistance;
@@ -57,7 +58,7 @@ public class BangBangController implements UltrasonicController {
       else
   	    simpleMovingAvg();
 
-    int error = BANDCENTER - this.distance;   
+    int error = BANDCENTER - this.movingAvg;   
     int absError = error > 0 ? error: -1*error;
     
     // just right
@@ -65,14 +66,23 @@ public class BangBangController implements UltrasonicController {
       setMotorsSpeed(SPEED +  SPEEDDELTA, SPEED + SPEEDDELTA);
     // too close
     else if (error > 0) {
-    	WallFollowingLab.leftMotor.setSpeed(SPEED + 2* SPEEDDELTA);
-    	WallFollowingLab.rightMotor.setSpeed(SPEED);
+    	if (this.movingAvg  < 15)
+    		WallFollowingLab.leftMotor.setSpeed(SPEED + 120);
+    	else
+    		WallFollowingLab.leftMotor.setSpeed(SPEED +  SPEEDDELTA);
+    	
+    	WallFollowingLab.rightMotor.setSpeed(90);
     	WallFollowingLab.leftMotor.forward();
     	WallFollowingLab.rightMotor.backward();
     }
     // too far
-    else 
-      setMotorsSpeed(SPEED, SPEED + 70);
+    else {
+    	if (this.movingAvg  > 100)
+    	  setMotorsSpeed(SPEED, SPEED+70);
+    	else 
+    		setMotorsSpeed(SPEED-20, SPEED + 70);
+    }
+    
   }
 
 

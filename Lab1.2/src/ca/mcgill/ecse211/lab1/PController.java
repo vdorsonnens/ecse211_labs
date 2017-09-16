@@ -10,9 +10,11 @@ public class PController implements UltrasonicController {
   private static final int FILTER_OUT = 10;
   private static final double PROP_CONSTANT = 20.0;
   private static final int MAX_CORRECTION = 125;
-  private static final int BANDCENTER = 20;
-  private static final int BANDWIDTH = 3;
-  
+  private static final int BANDCENTER = 29;
+  private static final int BANDWIDTH = 2;
+  private static final int CRITICAL_THRESHOLD = 15;
+  private static final int CLOSE_VALUE = BANDCENTER - BANDWIDTH;
+
   private int distance;
   private int filterControl;
   private int leftSpeed;
@@ -20,7 +22,7 @@ public class PController implements UltrasonicController {
 
   
   // moving avg test
-  private static final int AVG_SIZE = 100;
+  private static final int AVG_SIZE = 40;
   private static final double ALPHA = 0.01;
   private int sampleCount;
   private int movingAvg;
@@ -53,7 +55,7 @@ public class PController implements UltrasonicController {
   public void processUSData(int distance) {
 	
 	int correctedDistance = (int)(Math.sqrt(2.0)  * (double)distance);
-	if (correctedDistance > 250) correctedDistance = 250;
+	if (correctedDistance > 100) correctedDistance = 100;
 	
 	
 	// Filtering
@@ -65,9 +67,15 @@ public class PController implements UltrasonicController {
       filterControl = 0;
       this.distance = correctedDistance;
     }
-	
-	// moving avg test
-	updateMovingAvg();
+    
+    if (this.distance < CLOSE_VALUE) {
+      if (this.distance < CRITICAL_THRESHOLD)
+        setMovingAverage(this.distance);
+      else
+        setMovingAverage(15);
+    }
+    else
+	  updateMovingAvg();
     
     int error = BANDCENTER - this.distance;
     int absError = error > 0 ? error: -1*error;
@@ -90,7 +98,7 @@ public class PController implements UltrasonicController {
       	  	WallFollowingLab.rightMotor.setSpeed(rightSpeed);
       	  	WallFollowingLab.leftMotor.forward();
       	  	
-      	  	if (this.distance < 15) 
+      	  	if (this.distance < CRITICAL_THRESHOLD) 
       	  		WallFollowingLab.rightMotor.backward();
       	  	else
       	  		WallFollowingLab.rightMotor.forward();
@@ -101,8 +109,8 @@ public class PController implements UltrasonicController {
         	int absAvgError = avgError > 0 ? avgError: -1*avgError;
         	
         	correction = calculateCorrection(absAvgError);
-        	leftSpeed = MOTOR_SPEED - correction/4;
-        	rightSpeed = MOTOR_SPEED + correction/2;
+        	leftSpeed = MOTOR_SPEED - correction/5;
+        	rightSpeed = MOTOR_SPEED + correction/3;	
         	setMotorsSpeed(leftSpeed, rightSpeed);
         }
     }
@@ -172,6 +180,15 @@ public class PController implements UltrasonicController {
 		  this.avgBuffer.addLast(this.distance);
 		  
 		  this.movingAvg = this.movingAvg + this.distance/AVG_SIZE - head/AVG_SIZE;
+	  }
+  }
+  
+  private void setMovingAverage(int value) {
+	  System.out.println("Reset moving average to " + value);
+	  this.movingAvg = value;
+	  this.avgBuffer = new LinkedList<Integer>();
+	  for (int i=0; i<AVG_SIZE; i++) {
+		  this.avgBuffer.addLast(value);
 	  }
   }
   

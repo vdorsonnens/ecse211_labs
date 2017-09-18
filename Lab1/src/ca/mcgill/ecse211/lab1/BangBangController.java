@@ -4,14 +4,15 @@ import java.util.LinkedList;
 
 public class BangBangController implements UltrasonicController {
   private static final int SPEED = 125;
-  private static final int SPEEDDELTA = 70;
-  private static final int BANDCENTER = 25;
+  private static final int SPEEDDELTA_RIGHT = 70;
+  private static final int SPEEDDELTA_LEFT = 80;
+  private static final int BANDCENTER = 30;
   private static final int BANDWIDTH = 1;
-  private static final int FILTER_OUT = 0;
+  private static final int FILTER_OUT = 10;
   private static final int CRITICAL_THRESHOLD = 10;
   private static final int CLOSE_VALUE = BANDCENTER - BANDWIDTH;
   
-  private static final int AVG_SIZE = 20;
+  private static final int AVG_SIZE = 40;
   private int sampleCount;
   private int movingAvg;
   private LinkedList<Integer> avgBuffer;
@@ -45,44 +46,30 @@ public class BangBangController implements UltrasonicController {
       filterControl = 0;
       this.distance = correctedDistance;
     }
-    
-    // Moving average
-    if (this.distance < CLOSE_VALUE) {
-        if (this.distance < CRITICAL_THRESHOLD)
-          setMovingAverage(this.distance);
-        else
-          setMovingAverage(10);
-      }
-      else
-  	    simpleMovingAvg();
 
-    int error = BANDCENTER - this.movingAvg;   
+    int error = BANDCENTER - this.distance   ;
     int absError = error > 0 ? error: -1*error;
     
     // just right
     if (absError < BANDWIDTH)
-      setMotorsSpeed(SPEED +  SPEEDDELTA, SPEED + SPEEDDELTA);
+      setMotorsSpeed(SPEED +  SPEEDDELTA_LEFT, SPEED + SPEEDDELTA_LEFT);
     // too close
     else if (error > 0) {
     	if (this.movingAvg  < 15)
-    		WallFollowingLab.leftMotor.setSpeed(SPEED + 120);
+    		WallFollowingLab.leftMotor.setSpeed(SPEED + SPEEDDELTA_RIGHT*2);
     	else
-    		WallFollowingLab.leftMotor.setSpeed(SPEED +  SPEEDDELTA);
+    		WallFollowingLab.leftMotor.setSpeed(SPEED +  SPEEDDELTA_RIGHT);
     	
-    	WallFollowingLab.rightMotor.setSpeed(90);
+    	WallFollowingLab.rightMotor.setSpeed(SPEEDDELTA_RIGHT);
     	WallFollowingLab.leftMotor.forward();
     	WallFollowingLab.rightMotor.backward();
     }
     // too far
     else {
-    	if (this.movingAvg  > 100)
-    	  setMotorsSpeed(SPEED, SPEED+70);
-    	else 
-    		setMotorsSpeed(SPEED-20, SPEED + 70);
+    	  setMotorsSpeed(SPEED, SPEED+SPEEDDELTA_LEFT);
     }
     
   }
-
 
   private void setMotorsSpeed(int leftSpeed, int rightSpeed) {
     WallFollowingLab.leftMotor.setSpeed(leftSpeed);

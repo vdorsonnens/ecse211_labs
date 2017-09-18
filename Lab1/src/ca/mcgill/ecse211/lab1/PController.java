@@ -9,7 +9,7 @@ public class PController implements UltrasonicController {
   private static final int FILTER_OUT = 10;
   private static final double PROP_CONSTANT = 20.0;
   private static final int MAX_CORRECTION = 125;
-  private static final int BANDCENTER = 29;
+  private static final int BANDCENTER = 30;
   private static final int BANDWIDTH = 2;
   private static final int CRITICAL_THRESHOLD = 15;
   private static final int CLOSE_VALUE = BANDCENTER - BANDWIDTH;
@@ -62,13 +62,13 @@ public class PController implements UltrasonicController {
     // Moving average
     if (this.distance < CLOSE_VALUE) {
       if (this.distance < CRITICAL_THRESHOLD)
-        setMovingAverage(this.distance);
+        setMovingAverage(10);
       else
-        setMovingAverage(15);
+        setMovingAverage(10);
     }
     else
 	  simpleMovingAvg();
-    
+  
     // Calculate error
     int error = BANDCENTER - this.distance;
     int absError = error > 0 ? error: -1*error;
@@ -91,8 +91,12 @@ public class PController implements UltrasonicController {
       	  	WallFollowingLab.rightMotor.setSpeed(rightSpeed);
       	  	WallFollowingLab.leftMotor.forward();
       	  	
-      	  	if (this.distance < CRITICAL_THRESHOLD) 
+      	  	if (this.distance < CRITICAL_THRESHOLD)  {
+      	  		WallFollowingLab.rightMotor.setSpeed(rightSpeed);
+      	  		WallFollowingLab.leftMotor.setSpeed(leftSpeed);
       	  		WallFollowingLab.rightMotor.backward();
+      	  		WallFollowingLab.leftMotor.forward();
+      	  	}
       	  	else
       	  		WallFollowingLab.rightMotor.forward();
         }
@@ -103,7 +107,7 @@ public class PController implements UltrasonicController {
         	
         	correction = calculateCorrection(absAvgError);
         	leftSpeed = MOTOR_SPEED - correction/5;
-        	rightSpeed = MOTOR_SPEED + correction/3;	
+        	rightSpeed = MOTOR_SPEED + correction/2;	
         	setMotorsSpeed(leftSpeed, rightSpeed);
         }
     }

@@ -1,6 +1,5 @@
 package ca.mcgill.ecse211.lab1;
 
-import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import java.util.LinkedList;
 
 public class PController implements UltrasonicController {
@@ -20,16 +19,11 @@ public class PController implements UltrasonicController {
   private int leftSpeed;
   private int rightSpeed;
 
-  
-  // moving avg test
+  // moving avg
   private static final int AVG_SIZE = 40;
-  private static final double ALPHA = 0.01;
   private int sampleCount;
   private int movingAvg;
   private LinkedList<Integer> avgBuffer;
-  private int sizeSum;
-  private int lastTotal;
-  private int lastNumerator;
 
   public PController() {
 	this.distance = BANDCENTER;
@@ -37,13 +31,10 @@ public class PController implements UltrasonicController {
     this.leftSpeed = 0;
     this.rightSpeed = 0;
     
-    // moving avg test
+    // moving avg
     this.sampleCount = 0;
     this.movingAvg = 0;
     this.avgBuffer = new LinkedList<Integer>();
-    this.sizeSum = (AVG_SIZE * (AVG_SIZE+1)) / 2;
-    this.lastTotal = 0;
-    this.lastNumerator = 0;
     
     WallFollowingLab.leftMotor.setSpeed(leftSpeed); // Initalize motor rolling forward
     WallFollowingLab.rightMotor.setSpeed(rightSpeed);
@@ -68,6 +59,7 @@ public class PController implements UltrasonicController {
       this.distance = correctedDistance;
     }
     
+    // Moving average
     if (this.distance < CLOSE_VALUE) {
       if (this.distance < CRITICAL_THRESHOLD)
         setMovingAverage(this.distance);
@@ -75,8 +67,9 @@ public class PController implements UltrasonicController {
         setMovingAverage(15);
     }
     else
-	  updateMovingAvg();
+	  simpleMovingAvg();
     
+    // Calculate error
     int error = BANDCENTER - this.distance;
     int absError = error > 0 ? error: -1*error;
     int leftSpeed=0, rightSpeed=0;
@@ -114,54 +107,9 @@ public class PController implements UltrasonicController {
         	setMotorsSpeed(leftSpeed, rightSpeed);
         }
     }
-    //setMotorsSpeed(0,0);
   }
   
-  private void updateMovingAvg() {
-	  simpleMovingAvg();
-	  //expWeightedMovingAvg();	  
-  }
-  
-  // Exponentially Weighted Moving Average
-  private void expWeightedMovingAvg() {
-	  if (this.sampleCount == 0) {
-		  this.sampleCount++;
-		  this.movingAvg = this.distance;
-	  } else {
-		  this.movingAvg = (int) (ALPHA * (double)this.distance + (1.0-ALPHA) * (double)this.movingAvg);
-	  }
-  }
-  
-  // Weighted Moving Average
-  private void weightedMovingAvg() {
-	  if (this.sampleCount < AVG_SIZE - 1) {
-		  this.sampleCount++;
-		  this.avgBuffer.addLast(this.distance);
-		  this.movingAvg = this.distance;
-	  } else if (this.sampleCount == AVG_SIZE - 1) {
-		  this.sampleCount++;
-		  this.avgBuffer.addLast(this.distance);
-		  int numerator = 0;
-		  int total = 0;
-		  for (int i=0; i<AVG_SIZE; i++) { 
-			  numerator += (i+1) * this.avgBuffer.get(i);
-			  total += this.avgBuffer.get(i);
-		  }
-		  this.lastTotal = total;
-		  this.lastNumerator = numerator;
-		  this.movingAvg = numerator / this.sizeSum;
-	  } else {
-		  int head = this.avgBuffer.removeFirst();
-		  this.avgBuffer.addLast(this.distance);
-		  int total = this.lastTotal + this.distance - head;
-		  int numerator = this.lastNumerator + AVG_SIZE*this.distance - this.lastTotal;
-		  
-		  this.lastTotal = total;
-		  this.lastNumerator = numerator;
-		  this.movingAvg = numerator / this.sizeSum;
-	  }
-  }
-  
+ 
   // Simple Moving Average
   private void simpleMovingAvg() {
 	  if (this.sampleCount < AVG_SIZE-1) {
@@ -184,7 +132,6 @@ public class PController implements UltrasonicController {
   }
   
   private void setMovingAverage(int value) {
-	  System.out.println("Reset moving average to " + value);
 	  this.movingAvg = value;
 	  this.avgBuffer = new LinkedList<Integer>();
 	  for (int i=0; i<AVG_SIZE; i++) {
@@ -193,7 +140,6 @@ public class PController implements UltrasonicController {
   }
   
   private int calculateCorrection(int absError) {
-	  // y = ax, maybe try something smoother like ^2
 	  int correction = (int) (PROP_CONSTANT * (double) absError );
 	  correction = correction < MAX_CORRECTION ? correction: MAX_CORRECTION;
 	  return correction;
@@ -208,8 +154,6 @@ public class PController implements UltrasonicController {
   
   @Override
   public int readUSDistance() {
-	System.out.printf("DISTANCE: %d\tAVG: %d\n", this.distance, this.movingAvg);
-	//return this.rate;
     return this.distance;
   }
 

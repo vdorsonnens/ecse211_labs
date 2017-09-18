@@ -2,12 +2,9 @@ package ca.mcgill.ecse211.lab1;
 
 import java.util.LinkedList;
 
-import lejos.hardware.motor.*;
-
 public class BangBangController implements UltrasonicController {
   private static final int SPEED = 125;
   private static final int SPEEDDELTA = 70;
-  private static final int WMA_N = 20;
   private static final int BANDCENTER = 25;
   private static final int BANDWIDTH = 1;
   private static final int FILTER_OUT = 0;
@@ -49,6 +46,7 @@ public class BangBangController implements UltrasonicController {
       this.distance = correctedDistance;
     }
     
+    // Moving average
     if (this.distance < CLOSE_VALUE) {
         if (this.distance < CRITICAL_THRESHOLD)
           setMovingAverage(this.distance);

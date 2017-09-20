@@ -5,10 +5,10 @@ import java.util.LinkedList;
 public class BangBangController implements UltrasonicController {
   private static final int SPEED = 125;
   private static final int SPEEDDELTA_RIGHT = 70;
-  private static final int SPEEDDELTA_LEFT = 80;
-  private static final int BANDCENTER = 30;
-  private static final int BANDWIDTH = 1;
-  private static final int FILTER_OUT = 10;
+  private static final int SPEEDDELTA_LEFT = 90;
+  private static final int BANDCENTER = 35;
+  private static final int BANDWIDTH = 3;
+  private static final int FILTER_OUT = 5;
   private static final int CRITICAL_THRESHOLD = 10;
   private static final int CLOSE_VALUE = BANDCENTER - BANDWIDTH;
   
@@ -41,7 +41,6 @@ public class BangBangController implements UltrasonicController {
       filterControl++;
     } else if (correctedDistance >= 100) {
       this.distance = 100;
-      setMovingAverage(150);
     } else {
       filterControl = 0;
       this.distance = correctedDistance;
@@ -55,8 +54,17 @@ public class BangBangController implements UltrasonicController {
       setMotorsSpeed(SPEED +  SPEEDDELTA_LEFT, SPEED + SPEEDDELTA_LEFT);
     // too close
     else if (error > 0) {
-    	if (this.movingAvg  < 15)
-    		WallFollowingLab.leftMotor.setSpeed(SPEED + SPEEDDELTA_RIGHT*2);
+    	if (this.distance  < 15) {
+    		WallFollowingLab.leftMotor.setSpeed(50);
+    		WallFollowingLab.rightMotor.setSpeed(125);
+    		WallFollowingLab.leftMotor.backward();
+    		WallFollowingLab.rightMotor.backward();
+    		try {
+    	        Thread.sleep(500);
+    	      } catch (Exception e) {
+    	      } // Poor man's timed sampling
+    			WallFollowingLab.leftMotor.setSpeed(SPEED + SPEEDDELTA_RIGHT*2);
+    	}
     	else
     		WallFollowingLab.leftMotor.setSpeed(SPEED +  SPEEDDELTA_RIGHT);
     	
@@ -78,34 +86,6 @@ public class BangBangController implements UltrasonicController {
 	WallFollowingLab.rightMotor.forward();
   }
   
-//Simple Moving Average
- private void simpleMovingAvg() {
-	  if (this.sampleCount < AVG_SIZE-1) {
-		  this.sampleCount++;
-		  this.avgBuffer.addLast(this.distance);
-		  this.movingAvg = this.distance;
-	  } else if (this.sampleCount == AVG_SIZE-1) {
-		  this.sampleCount++;
-		  this.avgBuffer.addLast(this.distance);
-		  int sum = 0;
-		  for (int n: avgBuffer)
-			  sum += n;
-		  this.movingAvg = sum/AVG_SIZE;
-	  } else {
-		  int head = this.avgBuffer.removeFirst();
-		  this.avgBuffer.addLast(this.distance);
-		  
-		  this.movingAvg = this.movingAvg + this.distance/AVG_SIZE - head/AVG_SIZE;
-	  }
- }
- 
- private void setMovingAverage(int value) {
-	  this.movingAvg = value;
-	  this.avgBuffer = new LinkedList<Integer>();
-	  for (int i=0; i<AVG_SIZE; i++) {
-		  this.avgBuffer.addLast(value);
-	  }
- }
 
   @Override
   public int readUSDistance() {

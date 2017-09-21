@@ -12,7 +12,6 @@ public class OdometryCorrection extends Thread {
     this.odometer = odometer;
   }
 
-  // run method (required for Thread)
   public void run() {
     long correctionStart, correctionEnd;
 

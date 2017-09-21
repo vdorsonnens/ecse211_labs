@@ -11,15 +11,22 @@ public class Odometer extends Thread {
   private int rightMotorTachoCount;
   private EV3LargeRegulatedMotor leftMotor;
   private EV3LargeRegulatedMotor rightMotor;
-
-  private static final long ODOMETER_PERIOD = 25; /*odometer update period, in ms*/
+  
+  private double leftRadius;
+  private double rightRadius;
+  private double track;
+  
+  private static final long ODOMETER_PERIOD = 50; /*odometer update period, in ms*/
 
   private Object lock; /*lock object for mutual exclusion*/
 
   // default constructor
-  public Odometer(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor) {
+  public Odometer(EV3LargeRegulatedMotor leftMotor, EV3LargeRegulatedMotor rightMotor,  double leftRadius, double rightRadius, double track) {
     this.leftMotor = leftMotor;
     this.rightMotor = rightMotor;
+    this.leftRadius = leftRadius;
+    this.rightRadius = rightRadius;
+    this.track = track;
     this.x = 0.0;
     this.y = 0.0;
     this.theta = 0.0;
@@ -31,19 +38,44 @@ public class Odometer extends Thread {
   // run method (required for Thread)
   public void run() {
     long updateStart, updateEnd;
+    
+    this.leftMotor.resetTachoCount();
+    this.rightMotor.resetTachoCount();
+    
+    int leftTachoCountNow = 0;
+    int rightTachoCountNow = 0;
+    double distLeft, distRight, deltaD, deltaT, deltaX, deltaY;
 
     while (true) {
       updateStart = System.currentTimeMillis();
-      // TODO put (some of) your odometer code here
-
+  
+      
       synchronized (lock) {
         /**
          * Don't use the variables x, y, or theta anywhere but here! Only update the values of x, y,
          * and theta in this block. Do not perform complex math
-         * 
          */
-        theta = -0.7376; // TODO replace example value
-      }
+    	  // get new tacho counts
+          leftTachoCountNow = this.leftMotor.getTachoCount();
+          rightTachoCountNow = this.rightMotor.getTachoCount();
+          
+          // Compute l/r distances
+          distLeft = (leftTachoCountNow-this.leftMotorTachoCount) * this.leftRadius * 3.14159 / 180.0;
+          distRight = (rightTachoCountNow-this.rightMotorTachoCount) * this.rightRadius * 3.14159 / 180.0;
+          
+          // update tacho counts
+          this.leftMotorTachoCount = leftTachoCountNow;
+          this.rightMotorTachoCount = rightTachoCountNow;
+          
+          deltaD = (distLeft + distRight) / 2;
+          deltaT = (distLeft- distRight) / this.track;
+    	  
+          this.theta += deltaT;
+          deltaX = deltaD * Math.sin(this.theta);
+          deltaY = deltaD * Math.cos(this.theta);
+          this.x += deltaX;
+          this.y += deltaY;
+    	}
 
       // this ensures that the odometer only runs once every period
       updateEnd = System.currentTimeMillis();

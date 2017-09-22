@@ -8,6 +8,9 @@ import lejos.hardware.lcd.TextLCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
+import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.SensorModes;
+import lejos.robotics.SampleProvider;
 
 public class OdometryLab {
 
@@ -16,18 +19,30 @@ public class OdometryLab {
   
   private static final EV3LargeRegulatedMotor rightMotor =
       new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+  
+  private static final Port lsPort = LocalEV3.get().getPort("S3");
+  
+  public static final double TILE_SIZE = 30.48;
+  public static final double NUM_TILE_X = 2.0;
+  public static final double NUM_TILE_Y = 2.0;
 
   public static final double WHEEL_RADIUS = 2.1;
   public static final double TRACK = 13.0;
 
   public static void main(String[] args) {
-    int buttonChoice;
+    int buttonChoice;	
 
+    // setup sensor
+    EV3ColorSensor sensor = new EV3ColorSensor(lsPort);
+    SampleProvider lsColor = sensor.getColorIDMode();
+    float[] lsData = new float[lsColor.sampleSize()];
+    
     final TextLCD t = LocalEV3.get().getTextLCD();
     Odometer odometer = new Odometer(leftMotor, rightMotor, WHEEL_RADIUS, WHEEL_RADIUS, TRACK);
-    OdometryDisplay odometryDisplay = new OdometryDisplay(odometer, t);
-    OdometryCorrection odometryCorrection = new OdometryCorrection(odometer);
-
+    OdometryCorrection odometryCorrection = new OdometryCorrection(odometer, sensor);
+    OdometryDisplay odometryDisplay = new OdometryDisplay(odometer, odometryCorrection, t);
+ 
+    
     do {
       // clear the display
       t.clear();
@@ -64,13 +79,14 @@ public class OdometryLab {
       t.drawString("       |        ", 0, 4);
       
       buttonChoice = Button.waitForAnyPress();
+ 
+      if(buttonChoice == Button.ID_RIGHT){
+          odometryCorrection.start();
+        }
       
       odometer.start();
       odometryDisplay.start();
-      
-      if(buttonChoice != Button.ID_RIGHT){
-        odometryCorrection.start();
-      }
+ 
       
       // spawn a new Thread to avoid SquareDriver.drive() from blocking
       (new Thread() {

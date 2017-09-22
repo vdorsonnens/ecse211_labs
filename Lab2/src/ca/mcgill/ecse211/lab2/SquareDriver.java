@@ -16,7 +16,10 @@ public class SquareDriver {
       motor.stop();
       motor.setAcceleration(3000);
     }
-
+    
+    double straightLineDistX = OdometryLab.TILE_SIZE * OdometryLab.NUM_TILE_X;
+    double straightLineDistY = OdometryLab.TILE_SIZE * OdometryLab.NUM_TILE_Y;
+    
     // wait 5 seconds
     try {
       Thread.sleep(2000);
@@ -29,9 +32,14 @@ public class SquareDriver {
       // drive forward two tiles
       leftMotor.setSpeed(FORWARD_SPEED);
       rightMotor.setSpeed(FORWARD_SPEED);
-
-      leftMotor.rotate(convertDistance(leftRadius, 60.96), true);
-      rightMotor.rotate(convertDistance(rightRadius, 60.96), false);
+      
+      if (i %2 == 0) {
+    	  leftMotor.rotate(convertDistance(leftRadius, straightLineDistX), true);
+    	  rightMotor.rotate(convertDistance(rightRadius, straightLineDistX), false);
+      } else {
+    	  leftMotor.rotate(convertDistance(leftRadius, straightLineDistY), true);
+    	  rightMotor.rotate(convertDistance(rightRadius, straightLineDistY), false);  
+      }
 
       // turn 90 degrees clockwise
       leftMotor.setSpeed(ROTATE_SPEED);

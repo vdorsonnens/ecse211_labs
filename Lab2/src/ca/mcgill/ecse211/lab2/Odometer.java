@@ -3,6 +3,8 @@ package ca.mcgill.ecse211.lab2;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 
 public class Odometer extends Thread {
+	private static final double TWO_PI = 6.28319;
+	
   // robot position
   private double x;
   private double y;
@@ -48,31 +50,33 @@ public class Odometer extends Thread {
 
     while (true) {
       updateStart = System.currentTimeMillis();
-  
+      
+      // get new tacho counts
+      leftTachoCountNow = this.leftMotor.getTachoCount();
+      rightTachoCountNow = this.rightMotor.getTachoCount();
+      
+      // Compute l/r distances
+      distLeft = (leftTachoCountNow-this.leftMotorTachoCount) * this.leftRadius * 3.14159 / 180.0;
+      distRight = (rightTachoCountNow-this.rightMotorTachoCount) * this.rightRadius * 3.14159 / 180.0;
+      
+      // update tacho counts
+      this.leftMotorTachoCount = leftTachoCountNow;
+      this.rightMotorTachoCount = rightTachoCountNow;
+      
+      deltaD = (distLeft + distRight) / 2;
+      deltaT = (distLeft- distRight) / this.track;
       
       synchronized (lock) {
-        /**
-         * Don't use the variables x, y, or theta anywhere but here! Only update the values of x, y,
-         * and theta in this block. Do not perform complex math
-         */
-    	  // get new tacho counts
-          leftTachoCountNow = this.leftMotor.getTachoCount();
-          rightTachoCountNow = this.rightMotor.getTachoCount();
-          
-          // Compute l/r distances
-          distLeft = (leftTachoCountNow-this.leftMotorTachoCount) * this.leftRadius * 3.14159 / 180.0;
-          distRight = (rightTachoCountNow-this.rightMotorTachoCount) * this.rightRadius * 3.14159 / 180.0;
-          
-          // update tacho counts
-          this.leftMotorTachoCount = leftTachoCountNow;
-          this.rightMotorTachoCount = rightTachoCountNow;
-          
-          deltaD = (distLeft + distRight) / 2;
-          deltaT = (distLeft- distRight) / this.track;
     	  
+          // update x,y,theta
           this.theta += deltaT;
-          deltaX = deltaD * Math.sin(this.theta);
-          deltaY = deltaD * Math.cos(this.theta);
+          if (this.theta > TWO_PI)
+        	  this.theta =this.theta - TWO_PI ;
+          else if (this.theta < 0.0) 
+        	  this.theta = TWO_PI + this.theta;
+          
+          deltaY = deltaD * Math.sin(this.theta);
+          deltaX = deltaD * Math.cos(this.theta);
           this.x += deltaX;
           this.y += deltaY;
     	}

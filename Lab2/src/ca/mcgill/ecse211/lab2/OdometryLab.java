@@ -23,8 +23,8 @@ public class OdometryLab {
   private static final Port lsPort = LocalEV3.get().getPort("S3");
   
   public static final double TILE_SIZE = 30.48;
-  public static final double NUM_TILE_X = 2.0;
-  public static final double NUM_TILE_Y = 2.0;
+  public static final double NUM_TILE_X = 3.0;
+  public static final double NUM_TILE_Y = 3.0;
 
   public static final double WHEEL_RADIUS = 2.1;
   public static final double TRACK = 13.0;

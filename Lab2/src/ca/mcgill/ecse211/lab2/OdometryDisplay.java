@@ -34,8 +34,9 @@ public class OdometryDisplay extends Thread {
       t.drawString("X:              ", 0, 0);
       t.drawString("Y:              ", 0, 1);
       t.drawString("T:              ", 0, 2);
-      t.drawString("LINES:      ", 0, 3);
-      t.drawString("ERROR:     ", 0, 4);
+      t.drawString("LINES:          ", 0, 3);
+      t.drawString("              ", 0, 4);
+      t.drawString("DIR :            ", 0, 5);
 
       // get the odometry information
       odometer.getPosition(position, new boolean[] {true, true, true});
@@ -45,6 +46,8 @@ public class OdometryDisplay extends Thread {
         t.drawString(formattedDoubleToString(position[i], 2), 3, i);
       }
       t.drawString(Integer.toString(correcter.numLines), 8, 3);
+      t.drawString(Double.toString(correcter.nextLinePosition), 8, 4);
+      t.drawString(Integer.toString(correcter.direction),8,5);
 
       // throttle the OdometryDisplay
       displayEnd = System.currentTimeMillis();

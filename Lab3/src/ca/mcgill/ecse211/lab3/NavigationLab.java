@@ -10,17 +10,31 @@ import lejos.hardware.sensor.SensorModes;
 import lejos.robotics.SampleProvider;
 
 public class NavigationLab {
-	
+    
+    // TODO add other paths
+    private static final double[][][] MAPS = new double[][][]{
+        {{2, 0}, {1, -1}, {2, -2}, {1, -2}, {0, -1}},
+        {{1, -1}, {2, 0}, {2, -2}, {1, -2}, {0, -1}},
+        {{0, -1}, {1, -2}, {2, -2}, {2, 0}, {1, -1}},
+        {{1, 0}, {2, -1}, {0, -1}, {1, -2}, {2, -2}}
+    };
+    private static final int MAP_INDEX = 3; // just change this to navigate a different map
+
 	public static final double PI = 3.14159;
 	public static final double TWO_PI = 6.28319;
 	public static final double WHEEL_RADIUS = 2.1;
 	public static final double TRACK_LENGTH = 13.0;
+	public static final double TILE_SIZE = 30.48;
 	
 	private static final Port usPort = LocalEV3.get().getPort("S3");
 	
 	public static void main(String[] args) {
 	
-		final double[][] path = new double[][] {{1.0, -2.0}, {2.0, -2.0}, {2.0, 0.0}};
+        final double[][] path = MAPS[MAP_INDEX];
+        for (int i=0; i<path.length; i++) {
+        	path[i][0] *= TILE_SIZE;
+        	path[i][1] *= TILE_SIZE;
+        }
 		
 		final TextLCD textLCD = LocalEV3.get().getTextLCD();
 		final EV3LargeRegulatedMotor motorLeft = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
@@ -36,25 +50,23 @@ public class NavigationLab {
 		
 		// Instantiate threads controlling the robot
 		Odometer odometer = new Odometer(motorLeft, motorRight, WHEEL_RADIUS, WHEEL_RADIUS, TRACK_LENGTH);
-		OdometerDisplay display = new OdometerDisplay(textLCD, odometer);
-		Driver driver = new Driver(path, odometer, wheelsController);
-		ObstacleAvoider obstacleAvoider = new ObstacleAvoider(usSensor, usData, wheelsController);
+		UltrasonicController obstacleAvoider = new ObstacleAvoider(wheelsController);
+		Driver driver = new Driver(path, odometer, wheelsController, (ObstacleAvoider) obstacleAvoider);
+		OdometerDisplay display = new OdometerDisplay(textLCD, odometer, driver, obstacleAvoider);
+		UltrasonicPoller poller = new UltrasonicPoller(usSensor, usData, obstacleAvoider);
 		
 		// Wait for a button to start
 		textLCD.clear();
 		textLCD.drawString("Press any button", 0, 0);
 		Button.waitForAnyPress();
+		textLCD.clear();
 		
 		odometer.start();
 		display.start();
-		//obstacleAvoider.start();
+		poller.start();
 		driver.start();
 		
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE);
 	    System.exit(0);
-	}
-	
-	private void initializePath() {
-		
 	}
 }

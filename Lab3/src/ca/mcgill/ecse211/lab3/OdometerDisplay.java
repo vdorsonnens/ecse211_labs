@@ -8,15 +8,20 @@ public class OdometerDisplay extends Thread {
 	private static final long DISPLAY_PERIOD = 250;
 	private Odometer odometer;
 	private TextLCD textLCD;
+    private Driver driver;
+    private UltrasonicController avoider;
 	
-	public OdometerDisplay(TextLCD textLCD, Odometer odometer) {
+	public OdometerDisplay(TextLCD textLCD, Odometer odometer, Driver driver, UltrasonicController avoider) {
 		this.textLCD = textLCD;
 		this.odometer = odometer;
+        this.driver = driver;
+        this.avoider = avoider;
 	}
 	
 	public void run() {
 		long displayStart, displayEnd;
 	    double[] position = new double[3];
+        double[] direction = new double[2];
 
 	    // clear the display once
 	    textLCD.clear();
@@ -28,10 +33,16 @@ public class OdometerDisplay extends Thread {
 	      textLCD.drawString("X:              ", 0, 0);
 	      textLCD.drawString("Y:              ", 0, 1);
 	      textLCD.drawString("T:              ", 0, 2);
+
+          textLCD.drawString("distance:          ", 0, 4);
+          textLCD.drawString("angle:       ", 0, 5);
+          
+          textLCD.drawString("sensor:       ", 0, 6);
 	   
 	      // get the odometry information
 	      odometer.getPosition(position, new boolean[] {true, true, true});
-	      
+	      driver.getNext(direction);
+
 	      // change rad to deg
 	      position[2] = 180.0*position[2] / 3.14159;
 	      
@@ -39,6 +50,15 @@ public class OdometerDisplay extends Thread {
 	      for (int i = 0; i < 3; i++) {
 	        textLCD.drawString(formattedDoubleToString(position[i], 2), 3, i);
 	      }
+
+          // display driver information
+          for (int i=0; i<2; i++) {
+            textLCD.drawString(formattedDoubleToString(direction[i], 2), 8, i+4);    
+          }
+          
+          // display sensor info
+          textLCD.drawString(Integer.toString(this.avoider.readUSDistance()), 8, 6);
+
 
 	      // throttle the OdometryDisplay
 	      displayEnd = System.currentTimeMillis();

@@ -22,23 +22,25 @@ public class WheelsController {
 		this.trackLength = trackLength;
 	}
 	
-	public void forward(double distance) {
+	public void travelTo(double distance, boolean block) {
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
 		leftMotor.rotate(convertDistance(leftRadius, distance), true);
-  	  	rightMotor.rotate(convertDistance(rightRadius, distance), false);
+  	  	rightMotor.rotate(convertDistance(rightRadius, distance), !block);
 	}
 	
-	public void turn(double angle) {
+	public void turnTo(double angle) {
 		// Assuming angle is in degrees, to change if not
 		//angle = radianToDegree(angle);
 		leftMotor.setSpeed(TURN_SPEED);
 		rightMotor.setSpeed(TURN_SPEED);
-		rightMotor.rotate(convertAngle(leftRadius, trackLength, angle), true);
-	    leftMotor.rotate(-convertAngle(rightRadius, trackLength, angle), false);
+		rightMotor.rotate(-convertAngle(leftRadius, trackLength, angle), true);
+	    leftMotor.rotate(convertAngle(rightRadius, trackLength, angle), false);
 	}
 	
 	public void stop() {
+		leftMotor.setSpeed(0);
+		rightMotor.setSpeed(0);
 		leftMotor.stop();
 		rightMotor.stop();
 	}
@@ -47,6 +49,10 @@ public class WheelsController {
 		leftMotor.setSpeed(speed);
 		rightMotor.setSpeed(speed);
 	}
+
+    public void setSpeed(int speedLeft, int speedRight) {
+        
+    }
 	
 	private static int convertDistance(double radius, double distance) {
 	    return (int) ((180.0 * distance) / (Math.PI * radius));

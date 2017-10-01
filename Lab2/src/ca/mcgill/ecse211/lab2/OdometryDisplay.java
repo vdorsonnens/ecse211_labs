@@ -35,12 +35,15 @@ public class OdometryDisplay extends Thread {
       t.drawString("Y:              ", 0, 1);
       t.drawString("T:              ", 0, 2);
       t.drawString("LINES:          ", 0, 3);
-      t.drawString("              ", 0, 4);
+      t.drawString(" NEXT            ", 0, 4);
       t.drawString("DIR :            ", 0, 5);
 
       // get the odometry information
       odometer.getPosition(position, new boolean[] {true, true, true});
-
+      
+      // change rad to deg
+      position[2] = 180.0*position[2] / 3.14159;
+      
       // display odometry information
       for (int i = 0; i < 3; i++) {
         t.drawString(formattedDoubleToString(position[i], 2), 3, i);

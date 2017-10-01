@@ -12,21 +12,19 @@ public class OdometryCorrection extends Thread {
   private static final int BOARD_COLOR = 6;
   private static final int LINE_COLOR = 13;
   private static final double THETA_WIDTH = 0.78540; //   PI/4
-  private static final double ACCEPTED_ERROR = 2.0;
+  private static final double ACCEPTED_ERROR = 0.1;
   
   private static final int FILTER = 100;
   private int count;
   private boolean recentLine;
   
   private Odometer odometer;
-  
   private EV3ColorSensor sensor;
+  
   public int color;
   public int numLines;
-  private int indexCount;
   public int direction;
 
-  private static final double EPSILON = 0.5;
   public double nextLinePosition;
   
 
@@ -39,15 +37,14 @@ public class OdometryCorrection extends Thread {
     this.numLines = 0;
     this.count = 0;
     this.recentLine = false;
-    this.indexCount = 0;
     this.direction = 0;
-    
-    this.nextLinePosition = 15.24;
+
+    this.nextLinePosition = 0.0;
   }
 
   public void run() {
     long correctionStart, correctionEnd;
-    int newColor, direction;
+    int newColor;
     double error;
     
     // [x, y, theta]
@@ -82,28 +79,24 @@ public class OdometryCorrection extends Thread {
     	  		error = (position[0] + SENSOR_TO_WHEELS) - this.nextLinePosition;
     	  		if (Math.abs(error) > ACCEPTED_ERROR) {
     	  			odometer.setX(this.nextLinePosition);
-    	  			//System.out.println("     0 From: " + position[0] + "To: " + this.nextLinePosition);
     	  		}
     	  		break;
     	  	case 1:
     	  		error = (position[1] + SENSOR_TO_WHEELS) - this.nextLinePosition;
     	  		if (Math.abs(error) > ACCEPTED_ERROR) {
     	  			odometer.setY(this.nextLinePosition);
-    	  			//System.out.println("     1 From: " + position[1] + "To: " + this.nextLinePosition);
     	  		}
     	  		break;
     	  	case 2:
     	  		error = (position[0] - SENSOR_TO_WHEELS) - this.nextLinePosition;
     	  		if (Math.abs(error) > ACCEPTED_ERROR) {
     	  			odometer.setX(this.nextLinePosition);
-    	  			//System.out.println("     2 From: " + position[0] + "To: " + this.nextLinePosition);
     	  		}
     	  		break;
     	  	case 3:
     	  		error = (position[1] - SENSOR_TO_WHEELS) - this.nextLinePosition;
     	  		if (Math.abs(error) > ACCEPTED_ERROR) {
     	  			odometer.setY(this.nextLinePosition);
-    	  			//System.out.println("     3 From: " + position[1] + "To: " + this.nextLinePosition);
     	  		}
     	  		break;
     	  }	  
@@ -111,8 +104,6 @@ public class OdometryCorrection extends Thread {
       }
       
       this.color = newColor;
-
-     // System.out.println(this.indexCount++ + ", " + this.color);
 
       // this ensure the odometry correction occurs only once every period
       correctionEnd = System.currentTimeMillis();
@@ -148,34 +139,35 @@ public class OdometryCorrection extends Thread {
 	  return -1; // will not happen because the whole circle is already covered
   }
   
+  // 0, 0 is at a cross
   private void setNextLine(int direction) {
 	  switch (direction) {
 	  	case 0:
 	  		this.nextLinePosition += OdometryLab.TILE_SIZE;
-	  		if (this.nextLinePosition > OdometryLab.NUM_TILE_X * (OdometryLab.TILE_SIZE+1)) // will go to direction #3 (-Y){
+	  		if (this.nextLinePosition >= OdometryLab.NUM_TILE_X * OdometryLab.TILE_SIZE - 5.0)  // will go to direction #3 (-Y){
 	  		{
-	  			this.nextLinePosition = -OdometryLab.TILE_SIZE/2; // change for 0 if origin is at cross (now assuming origin is where we start)
+	  			this.nextLinePosition = 0.0;
 	  		}
 	  		break;
 	  	case 3:
 	  		this.nextLinePosition -= OdometryLab.TILE_SIZE;
-	  		if (this.nextLinePosition < -1*OdometryLab.NUM_TILE_Y * (OdometryLab.TILE_SIZE+1)) // will go to #2 (-X)
+	  		if (this.nextLinePosition <= -1*OdometryLab.NUM_TILE_Y * OdometryLab.TILE_SIZE + 5.0) // will go to #2 (-X)
 	  		{
-	  				this.nextLinePosition = (OdometryLab.NUM_TILE_X * OdometryLab.TILE_SIZE) - (OdometryLab.TILE_SIZE/2);
+	  				this.nextLinePosition = ((OdometryLab.NUM_TILE_X-1) * OdometryLab.TILE_SIZE);
 	  		}
 	  		break;
 	  	case 2:
 	  		this.nextLinePosition -= OdometryLab.TILE_SIZE;
 	  		if (this.nextLinePosition < 0) // will go to #1 (+Y)
 	  		{
-	  			this.nextLinePosition = -1 * (OdometryLab.NUM_TILE_Y * OdometryLab.TILE_SIZE - OdometryLab.TILE_SIZE/2);
+	  			this.nextLinePosition = -1 * ((OdometryLab.NUM_TILE_Y - 1) * OdometryLab.TILE_SIZE);
 	  		}
 	  		break;
 	  	case 1: 
 	  		this.nextLinePosition += OdometryLab.TILE_SIZE;
 	  		if (this.nextLinePosition > 0) // will go to direction #0 (+X)
 	  		{
-	  			this.nextLinePosition = OdometryLab.TILE_SIZE/2; // to change for 0 as well
+	  			this.nextLinePosition = 0;
 	  		}
 	  		break;
 	  }

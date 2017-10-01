@@ -29,8 +29,8 @@ public class Odometer extends Thread {
     this.leftRadius = leftRadius;
     this.rightRadius = rightRadius;
     this.track = track;
-    this.x = 0.0;
-    this.y = 0.0;
+    this.x = -1 * (OdometryLab.TILE_SIZE/2);
+    this.y = OdometryLab.TILE_SIZE/2;
     this.theta = 0.0;
     this.leftMotorTachoCount = 0;
     this.rightMotorTachoCount = 0;

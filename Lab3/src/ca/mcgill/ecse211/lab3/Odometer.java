@@ -68,10 +68,10 @@ public class Odometer extends Thread  {
 	    	  
 	          // update x,y,theta
 	          this.theta += deltaT;
-	          if (this.theta > NavigationLab.TWO_PI)
-	        	  this.theta =this.theta - NavigationLab.TWO_PI ;
+	          if (this.theta > 2*Math.PI)
+	        	  this.theta =this.theta - 2*Math.PI ;
 	          else if (this.theta < 0.0) 
-	        	  this.theta = NavigationLab.TWO_PI + this.theta;
+	        	  this.theta = 2*Math.PI + this.theta;
 	          
 	          deltaY = deltaD * Math.sin(this.theta);
 	          deltaX = deltaD * Math.cos(this.theta);

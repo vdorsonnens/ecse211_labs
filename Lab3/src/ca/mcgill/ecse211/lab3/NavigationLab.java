@@ -20,8 +20,6 @@ public class NavigationLab {
     };
     private static final int MAP_INDEX = 3; // just change this to navigate a different map
 
-	public static final double PI = 3.14159;
-	public static final double TWO_PI = 6.28319;
 	public static final double WHEEL_RADIUS = 2.1;
 	public static final double TRACK_LENGTH = 13.0;
 	public static final double TILE_SIZE = 30.48;
@@ -29,7 +27,8 @@ public class NavigationLab {
 	private static final Port usPort = LocalEV3.get().getPort("S3");
 	
 	public static void main(String[] args) {
-	
+		
+		// get map and scale coordinates
         final double[][] path = MAPS[MAP_INDEX];
         for (int i=0; i<path.length; i++) {
         	path[i][0] *= TILE_SIZE;

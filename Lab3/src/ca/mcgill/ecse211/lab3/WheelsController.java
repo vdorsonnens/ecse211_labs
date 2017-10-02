@@ -30,8 +30,7 @@ public class WheelsController {
 	}
 	
 	public void turnTo(double angle) {
-		// Assuming angle is in degrees, to change if not
-		//angle = radianToDegree(angle);
+		// angle is in degrees
 		leftMotor.setSpeed(TURN_SPEED);
 		rightMotor.setSpeed(TURN_SPEED);
 		rightMotor.rotate(-convertAngle(leftRadius, trackLength, angle), true);
@@ -49,10 +48,6 @@ public class WheelsController {
 		leftMotor.setSpeed(speed);
 		rightMotor.setSpeed(speed);
 	}
-
-    public void setSpeed(int speedLeft, int speedRight) {
-        
-    }
 	
 	private static int convertDistance(double radius, double distance) {
 	    return (int) ((180.0 * distance) / (Math.PI * radius));
@@ -61,9 +56,5 @@ public class WheelsController {
 	private static int convertAngle(double radius, double width, double angle) {
 	    return convertDistance(radius, Math.PI * width * angle / 360.0);
 	  }
-	
-	private static double radianToDegree(double rad) {
-		return 180 * rad / Math.PI;
-	}
 	
 }

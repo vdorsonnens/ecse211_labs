@@ -53,7 +53,9 @@ public class Driver extends Thread {
 			this.distance = vectorLength(nextDirectionVector);
 			
 			// blocking methods
+			avoider.setTurning(true);
 			wheelsController.turnTo(angle);
+			avoider.setTurning(false);
 			wheelsController.travelTo(distance, false);
 			this.atCoordinates = false;
 			
@@ -65,7 +67,7 @@ public class Driver extends Thread {
 					odometer.getPosition(robotPosition, update);
 					double dX = Math.abs(nextCoordinates[0] - robotPosition[0]);
 					double dY = Math.abs(nextCoordinates[1] - robotPosition[1]);
-					if (dX < 0.5 && dY < 0.5) {
+					if (dX < 2 && dY < 2) {
 						this.atCoordinates = true;
 					}
 				} else {
@@ -90,20 +92,21 @@ public class Driver extends Thread {
 	            currentDirectionVector[1] = nextDirectionVector[1];
 				nextCoordinatesIndex++;
 			}
+			
+			if (nextCoordinatesIndex == pathLength)
+				avoider.setTurning(true);
 		}
 	}
 	
 	private double angleToCoordinates(double[] currentDirection, double[] nextDirection, double currentAngle) {
-		// use dot product formulas
-		//double angle =  Math.acos(vectorDot(currentDirection, nextDirection) / (vectorLength(currentDirection) * vectorLength(nextDirection)));
-		//return 180.0*angle/Math.PI;
-		
+		// no division by 0 in here
 		if (nextDirection[0] == 0) {
 			nextDirection[0] += 0.0001;
 		}
+		
+		// angle from +x counter-clockwise to next direction
 		double angle = Math.atan(nextDirection[1]/nextDirection[0]);
 		angle = Math.abs(angle);
-		//System.out.printf("%.2f \n", angle);
 		
 		if (nextDirection[0] < 0 && nextDirection[1] > 0)
 			angle = Math.PI - angle;
@@ -112,44 +115,26 @@ public class Driver extends Thread {
 		else if (nextDirection[0] > 0 && nextDirection[1] < 0)
 			angle = 2*Math.PI - angle;
 		
-		//System.out.printf("%.2f \n", angle);
-		//System.out.printf("%.2f \n", currentAngle);
+		// minimal angle
 		angle = angle - currentAngle;
-		//System.out.printf("%.2f \n", angle);
-		
-		
-		
 		
 		if (angle < -Math.PI)
 			angle = 2*Math.PI + angle;
 		else if (angle > Math.PI) {
 			angle = angle - 2*Math.PI;
 		}
-			
-		//System.out.printf("%.2f \n", angle);
 		
+		// convert angle to degrees
 		return 180.0*angle/Math.PI;	
 	}
 	
 	private double vectorLength(double[] vec) {
 		return Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2));
 	}
-	
-	private double vectorDot(double[] a, double[] b) {
-		double dot = 0;
-		for (int i=0; i<a.length; i++)
-			dot += a[i] * b[i];
-		return dot;
-	}
-
-    private void normalize(double []a) {
-        double len = vectorLength(a);
-        a[0] = a[0]/len;
-        a[1] = a[1]/len;
-    }
 
     public void getNext(double[] buffer) {
         buffer[0] = this.distance;
         buffer[1] = this.angle;
     }
+   
 }

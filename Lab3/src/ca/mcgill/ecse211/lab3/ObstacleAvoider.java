@@ -6,22 +6,18 @@ public class ObstacleAvoider implements UltrasonicController {
 	private static final int FILTER_OUT = 2;
 	private static final int THRESHOLD = 5;
 	
-	private boolean avoiding;
-	
-	private SampleProvider usSensor;
-	private float[] usData;
 	private WheelsController wheelsController;
 	private int filterControl;
-	
+	private boolean avoiding;
+	private boolean turning;
 	private int distance;
 	
 	public ObstacleAvoider(WheelsController wheelsController) {
-		this.usSensor = usSensor;
-		this.usData = usData;
 		this.wheelsController = wheelsController;
 		this.distance = 20;
 		this.filterControl = 0;
 		this.avoiding = false;
+		this.turning = false;
 	}
 	
 	@Override
@@ -36,11 +32,12 @@ public class ObstacleAvoider implements UltrasonicController {
 	      this.distance = distance;
 	    }
 	    
-	    if (this.distance < THRESHOLD) {
+	    // object close, avoid it
+	    if (this.distance < THRESHOLD && !this.turning) {
 	    	this.avoiding = true;
 	    	this.wheelsController.stop();
 	    	this.wheelsController.turnTo(-90);
-	    	this.wheelsController.travelTo(20, true);
+	    	this.wheelsController.travelTo(25, true);
 	    	this.wheelsController.turnTo(90);
 	    	this.wheelsController.travelTo(30, true);
 	    	this.avoiding = false;
@@ -58,4 +55,7 @@ public class ObstacleAvoider implements UltrasonicController {
 		return this.avoiding;
 	}
 	
+	public void setTurning(boolean turn) {
+		this.turning = turn;
+	}
 }

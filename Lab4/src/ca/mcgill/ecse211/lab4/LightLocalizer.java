@@ -1,5 +1,6 @@
 package ca.mcgill.ecse211.lab4;
 
+import lejos.hardware.Button;
 import lejos.hardware.Sound;
 
 public class LightLocalizer implements LightHandler {
@@ -48,7 +49,7 @@ public class LightLocalizer implements LightHandler {
 				// end of falling edge, start of rising
 				this.fallingEdge = false;
 				this.risingEdge = true;
-				Sound.beep();
+				//Sound.beep();
 				lineDetected();
 			}
 		} 
@@ -77,98 +78,100 @@ public class LightLocalizer implements LightHandler {
 		double[] position = new double[3] ;
 		boolean[] update = new boolean[] {true, true, true};
 		
+		double thetaYNeg, thetaXNeg;
 		double angle1, angle2;
 		
+		
+		// find first line on X
 		wheels.turn(-90, false);
-		while (true) {
-			if (isLineDetected()) {
-				wheels.stop();
-				break;
-			}
-			try {
-				Thread.sleep(SLEEP_TIME);
-			} catch (InterruptedException err) {}
-		}
+		stopAfterNLines(1);
 		odometer.getPosition(position, update);
 		angle1 = position[2];
 		
 		wheels.turn(45, true);
 		this.lineDetected = false;
 		
-		int numLines = 0;
+		// find second line on X
 		wheels.turn(180, false);
-		while (true) {
-			if (isLineDetected()) {
-				if (numLines == 1) {
-					wheels.stop();
-					break;
-				} else {
-					numLines++;	
-				}
-			}
-			
-			try {
-				Thread.sleep(SLEEP_TIME);
-			} catch (InterruptedException err) {}
-		}
+		stopAfterNLines(2);
 		odometer.getPosition(position, update);
 		angle2 = position[2];
+		thetaXNeg = angle2;
 		
-		double thetaY = angle1-angle2;
-		double x = -1 * LocalizationLab.SENSOR_TO_WHEELS * Math.cos(thetaY/2.0);
-		odometer.setX(x);
-		
-		// Y
-		wheels.turn(180, false);
-		while (true) {
-			if (isLineDetected()) {
-				wheels.stop();
-				break;
-			}
-			try {
-				Thread.sleep(SLEEP_TIME);
-			} catch (InterruptedException err) {}
-		}
-		odometer.getPosition(position, update);
-		angle1 = position[2];
-		
-		numLines = 0;
-		wheels.turn(270, false);
-		while (true) {
-			if (isLineDetected()) {
-				if (numLines == 1) {
-					wheels.stop();
-					break;
-				} else {
-					numLines++;	
-				}
-			}
-			
-			try {
-				Thread.sleep(SLEEP_TIME);
-			} catch (InterruptedException err) {}
-		}
-		odometer.getPosition(position, update);
-		angle2 = position[2];
-		
-		
-		double thetaX = angle1-angle2;
+		// calculate y
+		double thetaX = angle2-angle1;
 		double y = -1 * LocalizationLab.SENSOR_TO_WHEELS * Math.cos(thetaX/2.0);
 		odometer.setY(y);
 		
-		double deltaTheta = Math.PI/2.0 - (thetaY - Math.PI) + thetaY/2.0;
-		System.out.println(180.0*deltaTheta/Math.PI);
 		
-		deltaTheta = Math.PI/2.0 - (thetaX - Math.PI) + thetaX/2.0;
-		System.out.println(180.0*deltaTheta/Math.PI);
 		
+		// find first line on Y
+		wheels.turn(180, false);
+		stopAfterNLines(1);
 		odometer.getPosition(position, update);
-		System.out.println(position[0]);
-		System.out.println(position[1]);
-		System.out.println(position[2]);
+		angle1 = position[2];
+		thetaYNeg = angle1;
+		
+		// find second line on Y
+		wheels.turn(270, false);
+		stopAfterNLines(2);
+		odometer.getPosition(position, update);
+		angle2 = position[2];
+		
+		
+		// calculate X
+		double thetaY = angle1-angle2;
+		double x =1* LocalizationLab.SENSOR_TO_WHEELS * Math.cos(thetaY/2.0);
+		odometer.setX(x);
+		
+		
+		// calculate delta_theta for x and y
+		double deltaTheta1 =  - (thetaYNeg - Math.PI) + thetaY/2.0;		
+		double deltaTheta2 = -Math.PI/2.0 - (thetaXNeg - Math.PI) + thetaX/2.0;
+		// average
+		double deltaTheta = (deltaTheta1 + deltaTheta2)/2;
+		
+		// update the angle
+		odometer.getPosition(position, update);
+		odometer.setAngle(position[2]+deltaTheta);
+				
+		// Travel to (0, 0) if needed
+		if (Math.abs(position[0]) > 2 || Math.abs(position[1]) > 2) {
+			
+			double dx = Math.abs(position[0]);
+			double dy = Math.abs(position[1]);
+			
+			double angle = 90.0 - 180.0/Math.PI * Math.atan(dx/dy);
+			wheels.turn(position[2]-angle, true);
+			wheels.forward(Math.sqrt(Math.pow(dx,  2) + Math.pow(dy, 2)), true);
+			
+		} else if (Math.abs(position[0]) > 2  ) {
+			wheels.forward(-1*position[0], true);
+		}
+
+		
+		// Set the direction to 0 degree;
+		odometer.getPosition(position, update);
+		wheels.turn(360-position[2]*180/Math.PI, true);
 	}
 	
 	public int readLightData() {
 		return this.lightIntensity;
+	}
+	
+	public void stopAfterNLines(int n) {
+		int numLines = 0;
+		while (true) {
+			if (isLineDetected()) {
+				numLines++;
+				if (numLines == n) {
+					wheels.stop();
+					break;
+				}
+			}
+			try {
+				Thread.sleep(SLEEP_TIME);
+			} catch (InterruptedException err) {}
+		}
 	}
 }

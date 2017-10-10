@@ -60,8 +60,8 @@ public class LocalizationLab {
 		// Start threads
 		odometer.start();
 		display.start();
-		//usPoller.start();
-		/*		
+		usPoller.start();
+			
 		switch (option) {
 		case Button.ID_LEFT:
 			usLocalizer.risingEdge();
@@ -74,7 +74,7 @@ public class LocalizationLab {
 			 System.exit(1);
 		}
 		usPoller.setHandler(null);
-		*/
+		
 		// wait for measurements
 		Button.waitForAnyPress();
 		

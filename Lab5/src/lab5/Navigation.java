@@ -8,21 +8,21 @@ public class Navigation extends Thread {
 	double angle  = 0;
 	
 	public Navigation() {
-
 	}
 
 	public void run() {
 		try {
+			// Positionning
 			FallingEdge();
 			lightPosition();
 			Button.waitForAnyPress();
+			
+			// Travel to X0, Y0
 			travelTo(Global.startingX, Global.startingY);
 			
+			// Cross the zipline
 			travelZipLine();	
-			
 			zipLineCorrection();
-			
-			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -70,32 +70,31 @@ public class Navigation extends Thread {
 		
 	}
 
-	
-
 	public void travelTo(int x, int y) throws Exception {
 		// start requiring threads
 		Global.colorSensorSwitch = true;
 		Global.odometerSwitch = true;
+		Global.secondLine = "travel to " + x + "," + y;
 		Thread.sleep(Global.THREAD_SLEEP_TIME);
 
 		double angle = 0;
 
 		// move across x
-		if (x != Odometer.getX()) {// verify if moving in x is needed
+		if (x != Global.X) {// verify if moving in x is needed
 
-			if (x > Odometer.getX()) {
+			if (x > Global.X) {
 				move(Global.KEEP_MOVING, true);
-				while (Odometer.getX() != x) {
+				while (Global.X != x) {
 					if (Global.BlackLineDetected) {
-						Odometer.setX(Odometer.getX()+1);
+						Global.X++;
 						Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 					}
 				}
 			} else {
 				move(-Global.KEEP_MOVING, true);
-				while (Odometer.getX() != x) {
+				while (Global.X != x) {
 					if (Global.BlackLineDetected) {
-						Odometer.setX(Odometer.getX()-1);
+						Global.X--;
 						Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 					}
 				}
@@ -105,20 +104,20 @@ public class Navigation extends Thread {
 		}
 		move(-Global.ROBOT_LENGTH, false);
 		turn(-90, false);
-		if (y != Odometer.getY()) {
-			if (y > Odometer.getY()) {
+		if (y != Global.Y) {
+			if (y > Global.Y) {
 				move(Global.KEEP_MOVING, true);
-				while (Odometer.getY() != y) {
+				while (Global.Y != y) {
 					if (Global.BlackLineDetected) {
-						Odometer.setY(Odometer.getY()+1);
+						Global.Y++;
 						Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 					}
 				}
 			} else {
 				move(-Global.KEEP_MOVING, true);
-				while (Odometer.getY() != y) {
+				while (Global.Y != y) {
 					if (Global.BlackLineDetected) {
-						Odometer.setY(Odometer.getY()-1);
+						Global.Y--;
 						Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 					}
 				}
@@ -134,6 +133,7 @@ public class Navigation extends Thread {
 		// start the corresponding sensor thread
 		Global.usSwitch = true;
 		Global.odometerSwitch = true;
+		Global.secondLine = "falling edge";
 		Thread.sleep(Global.THREAD_SLEEP_TIME);
 
 		int Angle = 0;
@@ -151,7 +151,7 @@ public class Navigation extends Thread {
 
 		// set this angle as starting angle
 		for (int i = 0; i < 5; i++) {
-			//Odometer.setTheta(0);
+			Global.theta = 0;
 		}
 
 		// redo same thing for other side
@@ -162,30 +162,28 @@ public class Navigation extends Thread {
 		turn(Global.STOP_MOVING, false);
 
 		// read angle and make it positive
-		Angle = (int) Odometer.getTheta();
+		Angle = (int) Global.theta;
 
 		// divide by 2 and add 45
 		if (Angle > 360) {// small correction to make sure it make no big cercles
 			Angle -= 360;
 		}
-		
 		Angle = Angle >> 1;
-
-		/*if(Global.startingCorner == 0) { Global.theta = 0;}
-		if(Global.startingCorner == 1) { Global.theta = 90;}
-		if(Global.startingCorner == 2) { Global.theta = 180;}
-		if(Global.startingCorner == 3) { Global.theta = 270;}*/
+		Angle += 45;
 
 		turn(Angle, false);
 
 		// turn off ussensor and odometer
 		Global.usSwitch = false;
 		Global.odometerSwitch = false;
+		Global.secondLine = "";
+		Global.thirdLine = "";
 	}
 
 	public void lightPosition() throws Exception {
 		// start the corresponding sensor thread
 		Global.colorSensorSwitch = true;
+		Global.secondLine = "light positionning";
 		Thread.sleep(Global.THREAD_SLEEP_TIME); // wait color sensor to get its values
 
 		// reset X
@@ -216,7 +214,9 @@ public class Navigation extends Thread {
 		move(0 - Global.ROBOT_LENGTH, false);
 		Thread.sleep(250);
 
-		turn(90, false);
+		turn(Global.KEEP_MOVING, true);
+		while (!Global.BlackLineDetected) {}
+		turn(Global.COLOR_SENSOR_OFFSET_ANGLE_SMALL, false);
 
 		// turn off color sensor
 		Global.colorSensorSwitch = false;
@@ -224,10 +224,12 @@ public class Navigation extends Thread {
 		// wait color sensor is turned off
 		Thread.sleep(200);
 
-		// reset coordinates
+		// rjeset coordinates
 		Global.angle = 0;
-		Odometer.setX(-1);
-		Odometer.setY(-1);
+		Global.X = -1;
+		Global.Y = -1;
+		
+		Global.secondLine = "";
 	}
 
 	private int convertAngle(double radius, double width, double angle) {

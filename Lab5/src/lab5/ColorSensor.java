@@ -19,12 +19,25 @@ public class ColorSensor extends Thread {
 		
 		while(true) {
 			//save some cpu costs
-			if (Global.colorSensorSwitch) {
-				
+			if (Global.colorSensorSwitch) {			
 				Global.leftColorProvider.fetchSample(Global.leftColorData, 0);
 				Global.frontColorProvider.fetchSample(Global.frontColorData, 0);
-				Global.forthLine = Global.leftColorData[0]+"";
-				Global.fifthLine = Global.frontColorData[0]+" "+Global.frontColorData[1]+" "+Global.frontColorData[2]+" ";
+				
+				// Get current color
+				Global.leftColor = (int) (Global.leftColorData[0] * 1000);
+				
+				if (Global.leftColor < 250) {
+					Global.BlackLineDetected = true;
+				} else {
+					Global.BlackLineDetected = false;
+				}
+				
+				try {
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				
 			}else {
 				try {

@@ -22,8 +22,6 @@ public class UltraSonicSensor extends Thread{
 				}
 				Arrays.sort(arr);
 				Global.ObstacleDistance = arr[MID]*100;
-				Global.secondLine = ""+Global.ObstacleDistance;
-				Global.thirdLine = ""+Odometer.getTheta();
 			}else {
 				try {
 					Thread.sleep(Global.THREAD_SLEEP_TIME);

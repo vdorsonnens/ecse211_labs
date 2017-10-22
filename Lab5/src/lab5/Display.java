@@ -18,7 +18,6 @@ public class Display extends Thread {
 	
 	public void run() {
 		final TextLCD t = LocalEV3.get().getTextLCD();
-		long displayStart, displayEnd;
 	    double[] position = new double[3];
 		
 	
@@ -46,10 +45,7 @@ public class Display extends Thread {
 			      // display odometry information
 			      for (int i = 0; i < 3; i++) {
 			        t.drawString(formattedDoubleToString(position[i], 2), 3, i);
-			      }
-			      
-			      
-			      
+			      }		      
 			}
 			
 			
@@ -62,47 +58,44 @@ public class Display extends Thread {
 		}
 	}
 		
-		  private static String formattedDoubleToString(double x, int places) {
-			    String result = "";
-			    String stack = "";
-			    long t;
+	private static String formattedDoubleToString(double x, int places) {
+		String result = "";
+		String stack = "";
+		long t;
 
-			    // put in a minus sign as needed
-			    if (x < 0.0)
-			      result += "-";
+		// put in a minus sign as needed
+		if (x < 0.0)
+			result += "-";
 
-			    // put in a leading 0
-			    if (-1.0 < x && x < 1.0)
-			      result += "0";
-			    else {
-			      t = (long) x;
-			      if (t < 0)
-			        t = -t;
+		// put in a leading 0
+		if (-1.0 < x && x < 1.0)
+			result += "0";
+		else {
+			t = (long) x;
+			if (t < 0)
+				t = -t;
 
-			      while (t > 0) {
-			        stack = Long.toString(t % 10) + stack;
-			        t /= 10;
-			      }
+			while (t > 0) {
+				stack = Long.toString(t % 10) + stack;
+				t /= 10;
+			}
 
-			      result += stack;
-			    }
+			result += stack;
+		}
 
-			    // put the decimal, if needed
-			    if (places > 0) {
-			      result += ".";
+		// put the decimal, if needed
+		if (places > 0) {
+			result += ".";
 
-			      // put the appropriate number of decimals
-			      for (int i = 0; i < places; i++) {
-			        x = Math.abs(x);
-			        x = x - Math.floor(x);
-			        x *= 10.0;
-			        result += Long.toString((long) x);
-			      }
-			    }
+			// put the appropriate number of decimals
+			for (int i = 0; i < places; i++) {
+				x = Math.abs(x);
+				x = x - Math.floor(x);
+				x *= 10.0;
+				result += Long.toString((long) x);
+			}
+		}
 
-			    return result;
-			  }
-
-	
-
+		return result;
+	}
 }
